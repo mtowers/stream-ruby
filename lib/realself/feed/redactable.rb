@@ -27,6 +27,34 @@ module RealSelf
       ##
       # marks all instances of an activity as redacted for all owners
       #
+      # @param [Hash]   query criteria hash of activities to redact
+      #
+      # @returns [int]  the number of feed owners for which this activity was redacted
+      def redact_by_activity(owner_type, query)
+        raise(
+          RealSelf::Feed::FeedError,
+          "Invalid activity query: #{query}"
+        ) unless query.is_a?(Hash) && !query.empty?
+
+        collection = get_collection(owner_type)
+        feed_query = {:redacted => {:'$ne' => true}}.merge(query) #omit redacted items
+        raise(
+          RealSelf::Feed::FeedError,
+          "Provided query returns more than 1 unique uuid to redact."
+        ) unless collection.distinct(:'activity.uuid', feed_query).size <= 1
+
+        #update all documents that matches the criteria
+        result = collection.find(feed_query).limit(1).to_a
+
+        uuid = result[0]['activity']['uuid'] unless result.empty?
+
+        uuid ? redact(owner_type, uuid) : 0
+      end
+
+
+      ##
+      # marks all instances of an activity as redacted for all owners
+      #
       # @param [String]   the UUID of the activity to redact
       #
       # @returns [int]  the number of feed owners for which this activity was redacted

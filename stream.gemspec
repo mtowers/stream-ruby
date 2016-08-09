@@ -21,15 +21,13 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
 
   gem.add_dependency "bunny"
+  gem.add_dependency "connection_pool", '2.2.0'
   gem.add_dependency "json-schema"
   gem.add_dependency "multi_json"
   gem.add_dependency "httparty"
   gem.add_dependency "rake", "~> 10.0"
+  gem.add_dependency "rspec"
 
-  gem.add_development_dependency "rspec"
-  # see Gemfile for test dependencies
-
-  # gem.add_development_dependency "bson_ext", '1.9.2'
   gem.add_development_dependency "mongo", '2.2.0'
   gem.add_development_dependency "pry-byebug"
   gem.add_development_dependency "sneakers", '2.2.1'

@@ -3,15 +3,16 @@ require 'mongo'
 
 describe RealSelf::Feed::Capped do
 
-  class CappedIntegrationTestFeed < RealSelf::Feed::Capped
-    FEED_NAME = :capped_integration_test.freeze
+  class StatefulCappedIntegrationTestFeed < RealSelf::Feed::Capped
+    FEED_NAME = :stateful_capped_integration_test.freeze
     MAX_FEED_SIZE = 10.freeze
-    include RealSelf::Feed::UnreadCountable
+    SESSION_EXPIRE_AFTER_SECONDS = 2.freeze
+    include RealSelf::Feed::Stateful
   end
 
 
   before :all do
-    @feed           = CappedIntegrationTestFeed.new
+    @feed           = StatefulCappedIntegrationTestFeed.new
     @feed.mongo_db  = IntegrationHelper.get_mongo
     @feed.ensure_index :user, background: false
   end
@@ -19,9 +20,7 @@ describe RealSelf::Feed::Capped do
 
   # shared examples
   it_should_behave_like '#insertable', @feed
-  it_should_behave_like RealSelf::Feed::Getable, @feed
-  it_should_behave_like RealSelf::Feed::Redactable, @feed
-  it_should_behave_like RealSelf::Feed::UnreadCountable, @feed
+  it_should_behave_like RealSelf::Feed::Stateful, @feed
 
 
   before :each do
@@ -41,9 +40,9 @@ describe RealSelf::Feed::Capped do
           MAX_FEED_SIZE = 99.freeze
         end
 
-        feed = CappedIntegrationTestFeed.new
+        feed = StatefulCappedIntegrationTestFeed.new
 
-        expect(feed.class::FEED_NAME).to eql :capped_integration_test
+        expect(feed.class::FEED_NAME).to eql :stateful_capped_integration_test
         expect(feed.class::MAX_FEED_SIZE).to eql 10
 
         expect(BogusCappedFeed::FEED_NAME).to eql :bogus_feed_test
@@ -95,12 +94,22 @@ describe RealSelf::Feed::Capped do
     end
   end
 
+  describe "#is_session_alive?" do
+    it "should expire after 2 second" do
+      @feed.touch_session(@owner)
+      expect(@feed.is_session_alive?(@owner)).to be true
+      sleep(@feed.class::SESSION_EXPIRE_AFTER_SECONDS - 1)
+      expect(@feed.is_session_alive?(@owner)).to be true
+      sleep(1)
+      expect(@feed.is_session_alive?(@owner)).to be false
+    end
+  end
 
   describe '#insert' do
     it "limits the feed to the specified max size" do
       stream_activities = []
 
-      (CappedIntegrationTestFeed::MAX_FEED_SIZE + 1).times do
+      (StatefulCappedIntegrationTestFeed::MAX_FEED_SIZE + 1).times do
         activity = Helpers.user_create_thing_activity
         sa       = RealSelf::Stream::StreamActivity.new(@owner, activity, [@owner])
 
@@ -108,10 +117,10 @@ describe RealSelf::Feed::Capped do
         @feed.insert @owner, sa
       end
 
-      result = @feed.get @owner, CappedIntegrationTestFeed::MAX_FEED_SIZE + 1
+      result = @feed.get @owner, StatefulCappedIntegrationTestFeed::MAX_FEED_SIZE + 1
 
-      expect(CappedIntegrationTestFeed::MAX_FEED_SIZE == result[:count])
-      expect(result[:stream_items].count).to eql CappedIntegrationTestFeed::MAX_FEED_SIZE
+      expect(StatefulCappedIntegrationTestFeed::MAX_FEED_SIZE == result[:unread_count])
+      expect(result[:stream_items].count).to eql StatefulCappedIntegrationTestFeed::MAX_FEED_SIZE
 
       stream_activities.reverse!
 

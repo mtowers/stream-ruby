@@ -8,7 +8,7 @@ shared_examples '#insertable' do |feed|
 
   describe '#insert' do
     it 'inserts activities idempotently' do
-      activity  = user_create_thing_activity
+      activity  = Helpers.user_create_thing_activity
       sa        = RealSelf::Stream::StreamActivity.new(@owner, activity, [@owner])
 
       @feed.insert(@owner, sa)
@@ -17,7 +17,7 @@ shared_examples '#insertable' do |feed|
       @feed.insert(@owner, sa)
       expect(@feed.get(@owner)[:count]).to eql 1
 
-      activity2 = user_create_thing_activity
+      activity2 = Helpers.user_create_thing_activity
       sa2       = RealSelf::Stream::StreamActivity.new(@owner, activity2, [@owner])
 
       @feed.insert(@owner, sa2)

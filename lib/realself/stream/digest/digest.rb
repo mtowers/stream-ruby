@@ -4,6 +4,9 @@ module RealSelf
       class Digest
         VERSION = 1
 
+        attr_reader :type, :interval, :owner, :version, :summaries, :uuid, :prototype
+
+
         class DigestError < StandardError; end
 
         @summary_klasses = {}
@@ -17,52 +20,53 @@ module RealSelf
         # Create a summary
         #
         # @param [Stream::Objekt] object
-        def self.create_summary(object)
+        def self.create_summary object
           type = object.type.to_sym
 
           raise DigestError, "Summary type not registered: #{type}" unless Digest.summary_klasses[type]
 
-          Digest.summary_klasses[type].new(object)
+          Digest.summary_klasses[type].new object
         end
 
 
-        def self.from_json(json, validate=true)
-          hash = MultiJson.decode(json, { :symbolize_keys => true })
-          from_hash(hash)
+        def self.from_json json, validate=true
+          hash = MultiJson.decode json, { :symbolize_keys => true }
+          from_hash hash
         end
 
-        def self.from_hash(hash)
-          type = hash[:type]
-          owner = RealSelf::Stream::Objekt.new(hash[:owner][:type], hash[:owner][:id])
-          interval = hash[:interval]
-          stats = hash[:stats]
+
+        def self.from_hash hash
+          type      = hash[:type]
+          owner     = RealSelf::Stream::Objekt.new hash[:owner][:type], hash[:owner][:id]
+          interval  = hash[:interval]
+          stats     = hash[:stats]
 
           summaries = {}
-          objects = hash[:summaries]
+          objects   = hash[:summaries]
 
           objects.each do |type, summary_hash|
-            summaries[type] = summaries[type] || {}
+            summaries[type] ||= {}
 
             summary_hash.each do |object_id, summary_array|
-              summary_object = RealSelf::Stream::Objekt.from_hash(summary_array[0])
-              summary = Digest.summary_klasses[type.to_sym].new(summary_object)
-              summary.activities = summary_array[1]
-              summaries[type][object_id] = [summary_object, summary]
+              summary_object              = RealSelf::Stream::Objekt.from_hash summary_array[0]
+              summary                     = Digest.summary_klasses[type.to_sym].new summary_object
+              summary.activities          = summary_array[1]
+              summaries[type][object_id]  = [summary_object, summary]
             end
           end
 
-          uuid = hash[:uuid] || SecureRandom.uuid
+          uuid      = hash[:uuid] || SecureRandom.uuid
           prototype = hash[:prototype] || nil
 
-          self.new(type, owner, interval, summaries, uuid, prototype)
+          Digest.new type, owner, interval, summaries, uuid, prototype
         end
 
-        def self.register_summary_type(type, klass)
+
+        def self.register_summary_type type, klass
           Digest.summary_klasses ||= {}
           Digest.summary_klasses[type.to_sym] = klass
         end
 
-        attr_reader :type, :interval, :owner, :version, :summaries, :uuid, :prototype
 
         def initialize(type, owner, interval, summaries = {}, uuid = SecureRandom.uuid, prototype = nil)
           @type      = type
@@ -73,6 +77,13 @@ module RealSelf
           @prototype = prototype ? prototype.to_s : "#{owner.type}.digest.#{type}"
           @version   = VERSION
         end
+
+
+        def ==(other)
+          other.kind_of?(self.class) and self.to_h == other.to_h
+        end
+
+        alias :eql? :==
 
         ##
         # Add a stream activity to a summary object
@@ -94,48 +105,51 @@ module RealSelf
           remove_empty_summaries
         end
 
-        def empty?
-          @summaries.empty?
-        end
-
-        def to_h
-          hash = {:stats => {}, :summaries => {}}
-          hash[:type] = @type.to_s
-          hash[:owner] = @owner.to_h
-          hash [:interval] = @interval.to_i
-          hash[:uuid] = @uuid.to_s
-          hash[:prototype] = @prototype.to_s
-          hash[:version] = VERSION
-
-          # collect the stats
-          @summaries.each do |type, list|
-            hash[:stats][type.to_sym] = list.length
-            hash[:summaries][type.to_sym] = hash[:summaries][type.to_sym] || {}
-            list.each { |object_id, summary_array| hash[:summaries][type.to_sym][object_id.to_sym] = [summary_array[0].to_h,  summary_array[1].to_h] }
-          end
-
-          return hash
-        end
-
-        alias :to_hash :to_h
-
-        def hash
-          to_h.hash
-        end
-
-        def ==(other)
-          other.kind_of?(self.class) and self.to_h == other.to_h
-        end
-
-        alias :eql? :==
 
         def content_type
           ContentType::DIGEST_ACTIVITY
         end
 
+
+        def empty?
+          @summaries.empty?
+        end
+
+
+        def hash
+          to_h.hash
+        end
+
+
+        def to_h
+          hash              = {:stats => {}, :summaries => {}}
+          hash[:type]       = @type.to_s
+          hash[:owner]      = @owner.to_h
+          hash [:interval]  = @interval.to_i
+          hash[:uuid] = @uuid.to_s
+          hash[:prototype]  = @prototype.to_s
+          hash[:version]    = VERSION
+
+          # collect the stats
+          @summaries.each do |type, list|
+            hash[:stats][type.to_sym] = list.length
+            hash[:summaries][type.to_sym] = hash[:summaries][type.to_sym] || {}
+            list.each do |object_id, summary_array|
+              hash[:summaries][type.to_sym][object_id.to_sym] = [summary_array[0].to_h,  summary_array[1].to_h]
+            end
+          end
+
+          hash
+        end
+
+        alias :to_hash :to_h
+
+
         def to_s
           MultiJson.encode(self.to_h)
         end
+
+        alias :to_string :to_s
 
 
         private
@@ -155,6 +169,7 @@ module RealSelf
           end
         end
 
+
         ##
         # Add an object to the digest's summaries and return the 'summary' portion of the summary
         #
@@ -163,7 +178,7 @@ module RealSelf
         # @return [?] The summary
         def get_summary(object)
           # Initialize with an empty hash if this key doesn't exist
-          @summaries[object.type.to_sym] = @summaries[object.type.to_sym] || {}
+          @summaries[object.type.to_sym] ||= {}
 
           # Create a new summary if we haven't already for this type/id pair
           @summaries[object.type.to_sym][object.id.to_sym] ||= [object, Digest.create_summary(object)]

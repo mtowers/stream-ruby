@@ -2,17 +2,17 @@ describe RealSelf::Stream::FollowedObjekt do
 
   def followed_objekt(i)
     {
-      :type => "answer",
-      :id => i.to_s,
-      :followers =>
+      :type       => "answer",
+      :id         => i.to_s,
+      :followers  =>
       [
         {
           :type => "user",
-          :id => "2345"
+          :id   => "2345"
         },
         {
           :type => "user",
-          :id => "3456"
+          :id   => "3456"
         }
       ]
     }
@@ -71,6 +71,19 @@ describe RealSelf::Stream::FollowedObjekt do
       expect(@followed_objekt).to_not eql 'string'
       expect(@followed_objekt).to_not eql({:foo => 'bar'})
       expect(@followed_objekt).to_not eql Exception.new('oops!')
+    end
+  end
+
+  describe "#hash" do
+    it "supports hash key equality" do
+      sa1 = RealSelf::Stream::FollowedObjekt.from_hash followed_objekt(1234)
+      sa2 = RealSelf::Stream::FollowedObjekt.from_hash followed_objekt(1234)
+
+      expect(sa1.object_id).to_not eql(sa2.object_id)
+
+      e = {}
+      e[sa2] = 1234
+      expect(e.include?(sa1)).to eql(true)
     end
   end
 

@@ -1,4 +1,4 @@
-require 'realself/stream/activity/activity'
+require 'realself/stream/activity'
 require 'realself/content_type'
 require 'realself/handler/enclosure'
 require 'realself/handler/factory'

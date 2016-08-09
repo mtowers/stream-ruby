@@ -4,15 +4,15 @@ module RealSelf
 
       # default worker options
       WORKER_OPTIONS = {
-         :ack         => true,
-         :durable     => true,
-         :prefetch    => 1,
-         :threads     => 1
+         :ack               => true,
+         :durable           => true,
+         :prefetch          => 1,
+         :threads           => 1
       }.freeze
 
 
       def work_with_params message, delivery_info, metadata
-        activity        = Stream::Factory.from_json self.class.content_type, message
+        activity        = Stream::Factory.from_json self.class.content_type, message, true
         enclosure       = Handler::Factory.enclosure self.class.queue_name
         handlers        = Handler::Factory.create(
                             activity.prototype,
@@ -40,6 +40,9 @@ module RealSelf
 
           worker_options[:exchange]    = exchange_name
           worker_options[:routing_key] = Handler::Factory.registered_routing_keys(self.content_type)
+
+          # warn when no handlers registered for content type
+          RealSelf.logger.warn("No registered handlers found for content_type: #{self.content_type}, Worker: #{self.class.name}") if worker_options[:routing_key].empty?
 
           # enable DLX with default name if requested
           worker_options.merge!(

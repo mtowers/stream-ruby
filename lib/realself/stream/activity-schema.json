@@ -1,7 +1,7 @@
 {
-  "id" : "http://realself.com/queue-item-schema-v2#",
+  "id" : "http://realself.com/activity-schema#",
   "$schema" : "http://json-schema.org/draft-04/schema#",
-  "description" : "schema for items places on the ingestor queue",
+  "description" : "schema for activity objects",
   "type" : "object",
   "required" : ["published", "title", "actor", "verb", "object"],
   "properties" : {
@@ -48,12 +48,6 @@
         },
         "id" : {
           "type" : "string"
-        },
-        "followers" : {
-          "type" : "array",
-          "items" : {"$ref" : "#/definitions/activity-object"},
-          "minItems" : 0,
-          "uniqueItems" : true
         }
       }
     }

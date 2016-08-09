@@ -1,127 +1,69 @@
 module Helpers
 
-  @@activity_version = 2
-
-  def self.init(activity_version)
-    @@activity_version = activity_version.to_i
-  end
-
-  def objekts_array
+  def self.objekts_array
     array = []
     array.push(RealSelf::Stream::Objekt.new('user', 1234))
     array.push(RealSelf::Stream::Objekt.new('user', 2345))
     array
   end
 
-  def example_hash
 
-    hash = {
-      :title => "sample activity title",
-      :published => "1970-01-01T00:00:00+00:00",
-      :actor => {:type => "dr", :id => "1234"},
-      :verb => "author",
-      :object => {:type => "answer", :id => "2345"},
-      :uuid => "f364c40c-6e91-4064-a825-faae79c10254",
-      :target => {:type => "question", :id => "3456"},
-      :prototype => "explicit.prototype.value"
+  def self.example_hash
+    {
+      :title      => "sample activity title",
+      :published  => DateTime.parse("1970-01-01T00:00:00+00:00"),
+      :actor      => {:type => "dr", :id => "1234"},
+      :verb       => "author",
+      :object     => {:type => "answer", :id => "2345"},
+      :uuid       => "f364c40c-6e91-4064-a825-faae79c10254",
+      :target     => {:type => "question", :id => "3456"},
+      :extensions => {:topic => {:type => "topic", :id => "4567"}},
+      :prototype  => "explicit.prototype.value"
     }
-
-    case @@activity_version
-    when 1
-      hash[:relatives] = [{:type => "topic", :id => "4567"}]
-    when 2
-      hash[:version] = 2
-      hash[:extensions] = {:topic => {:type => "topic", :id => "4567"}}
-    else
-      hash[:version] = @@activity_version
-    end
-
-    return hash
   end
 
-  def example_activity
-    case @@activity_version
-    when 1
-      RealSelf::Stream::Activity.create(@@activity_version,
-        'sample activity title',
-        DateTime.parse('1970-01-01T00:00:00Z'),
-        RealSelf::Stream::Objekt.new('dr', 1234),
-        'author',
-        RealSelf::Stream::Objekt.new('answer', 2345),
-        RealSelf::Stream::Objekt.new('question', 3456),
-        [RealSelf::Stream::Objekt.new('topic', 4567)],
-        "f364c40c-6e91-4064-a825-faae79c10254",
-        "explicit.prototype.value"
-      )
-    when 2
-      RealSelf::Stream::Activity.create(@@activity_version,
-        'sample activity title',
-        DateTime.parse('1970-01-01T00:00:00Z'),
-        RealSelf::Stream::Objekt.new('dr', 1234),
-        'author',
-        RealSelf::Stream::Objekt.new('answer', 2345),
-        RealSelf::Stream::Objekt.new('question', 3456),
-        {:topic => RealSelf::Stream::Objekt.new('topic', 4567)},
-        "f364c40c-6e91-4064-a825-faae79c10254",
-        "explicit.prototype.value"
-      )
-    end
+
+  def self.example_activity
+    RealSelf::Stream::Activity.new(
+      'sample activity title',
+      DateTime.parse('1970-01-01T00:00:00Z'),
+      RealSelf::Stream::Objekt.new('dr', 1234),
+      'author',
+      RealSelf::Stream::Objekt.new('answer', 2345),
+      RealSelf::Stream::Objekt.new('question', 3456),
+      {:topic => RealSelf::Stream::Objekt.new('topic', 4567)},
+      "f364c40c-6e91-4064-a825-faae79c10254",
+      "explicit.prototype.value")
   end
 
-  def example_activity_without_uuid
-    case @@activity_version
-    when 1
-      RealSelf::Stream::Activity.create(@@activity_version,
-        'sample activity title',
-        DateTime.parse('1970-01-01T00:00:00Z'),
-        RealSelf::Stream::Objekt.new('dr', 1234),
-        'author',
-        RealSelf::Stream::Objekt.new('answer', 2345),
-        RealSelf::Stream::Objekt.new('question', 3456),
-        [RealSelf::Stream::Objekt.new('topic', 4567)]
-      )
-    when 2
-      RealSelf::Stream::Activity.create(@@activity_version,
-        'sample activity title',
-        DateTime.parse('1970-01-01T00:00:00Z'),
-        RealSelf::Stream::Objekt.new('dr', 1234),
-        'author',
-        RealSelf::Stream::Objekt.new('answer', 2345),
-        RealSelf::Stream::Objekt.new('question', 3456),
-        {:topic => RealSelf::Stream::Objekt.new('topic', 4567)}
-      )
-    end
+
+  def self.example_activity_without_uuid
+    RealSelf::Stream::Activity.new(
+      'sample activity title',
+      DateTime.parse('1970-01-01T00:00:00Z'),
+      RealSelf::Stream::Objekt.new('dr', 1234),
+      'author',
+      RealSelf::Stream::Objekt.new('answer', 2345),
+      RealSelf::Stream::Objekt.new('question', 3456),
+      {:topic => RealSelf::Stream::Objekt.new('topic', 4567)})
   end
 
-  def example_activity_without_prototype
-    case @@activity_version
-    when 1
-      RealSelf::Stream::Activity.create(@@activity_version,
-        'sample activity title',
-        DateTime.parse('1970-01-01T00:00:00Z'),
-        RealSelf::Stream::Objekt.new('dr', 1234),
-        'author',
-        RealSelf::Stream::Objekt.new('answer', 2345),
-        RealSelf::Stream::Objekt.new('question', 3456),
-        [RealSelf::Stream::Objekt.new('topic', 4567)],
-        "f364c40c-6e91-4064-a825-faae79c10254"
-      )
-    when 2
-      RealSelf::Stream::Activity.create(@@activity_version,
-        'sample activity title',
-        DateTime.parse('1970-01-01T00:00:00Z'),
-        RealSelf::Stream::Objekt.new('dr', 1234),
-        'author',
-        RealSelf::Stream::Objekt.new('answer', 2345),
-        RealSelf::Stream::Objekt.new('question', 3456),
-        {:topic => RealSelf::Stream::Objekt.new('topic', 4567)},
-        "f364c40c-6e91-4064-a825-faae79c10254"
-      )
-    end
+
+  def self.example_activity_without_prototype
+    RealSelf::Stream::Activity.new(
+      'sample activity title',
+      DateTime.parse('1970-01-01T00:00:00Z'),
+      RealSelf::Stream::Objekt.new('dr', 1234),
+      'author',
+      RealSelf::Stream::Objekt.new('answer', 2345),
+      RealSelf::Stream::Objekt.new('question', 3456),
+      {:topic => RealSelf::Stream::Objekt.new('topic', 4567)},
+      "f364c40c-6e91-4064-a825-faae79c10254")
   end
 
-  def example_activity_without_target_or_relatives
-    RealSelf::Stream::Activity.create(@@activity_version,
+
+  def self.example_activity_without_target_or_relatives
+    RealSelf::Stream::Activity.new(
       'sample activity title',
       DateTime.parse('1970-01-01T00:00:00Z'),
       RealSelf::Stream::Objekt.new('dr', 1234),
@@ -129,12 +71,12 @@ module Helpers
       RealSelf::Stream::Objekt.new('answer', 2345),
       nil,
       nil,
-      "f364c40c-6e91-4064-a825-faae79c10254"
-    )
+      "f364c40c-6e91-4064-a825-faae79c10254")
   end
 
-  def user_create_thing_activity(user_id = Random::rand(1000..9999), thing_id = Random::rand(1000..9999))
-    RealSelf::Stream::Activity.create(2,
+
+  def self.user_create_thing_activity user_id = Random::rand(1000..9999), thing_id = Random::rand(1000..9999)
+    RealSelf::Stream::Activity.new(
       "user(#{user_id}) create thing(#{thing_id}",
       DateTime.parse('1970-01-01T00:00:00Z'),
       RealSelf::Stream::Objekt.new('user', user_id),
@@ -143,12 +85,12 @@ module Helpers
       nil,
       nil,
       SecureRandom.uuid,
-      'user.create.thing'
-      )
+      'user.create.thing')
   end
 
-  def user_update_thing_activity(user_id = Random::rand(1000..9999), thing_id = Random::rand(1000..9999))
-    RealSelf::Stream::Activity.create(2,
+
+  def self.user_update_thing_activity user_id = Random::rand(1000..9999), thing_id = Random::rand(1000..9999)
+    RealSelf::Stream::Activity.new(
       "user(#{user_id}) update thing(#{thing_id}",
       DateTime.parse('1970-01-01T00:00:00Z'),
       RealSelf::Stream::Objekt.new('user', user_id),
@@ -157,18 +99,32 @@ module Helpers
       nil,
       nil,
       SecureRandom.uuid,
-      'user.update.thing'
-      )
+      'user.update.thing')
   end
 
-  def followed_activity(i)
-    hash = {
-      :published => "1970-01-01T00:00:00+00:00",
+
+  def self.user_unpublish_thing_activity user_id = Random::rand(1000..9999), thing_id = Random::rand(1000..9999)
+    RealSelf::Stream::Activity.new(
+      "user(#{user_id}) update thing(#{thing_id}",
+      DateTime.parse('1970-01-01T00:00:00Z'),
+      RealSelf::Stream::Objekt.new('user', user_id),
+      'update',
+      RealSelf::Stream::Objekt.new('thing', thing_id),
+      nil,
+      nil,
+      SecureRandom.uuid,
+      'user.unpublish.thing')
+  end
+
+
+  def self.followed_activity_hash(actor_id)
+    {
+      :published => DateTime.parse("1970-01-01T00:00:00+00:00"),
       :title => "QUEUE ITEM - dr(57433) author answer(1050916) about question(1048591)",
       :actor =>
       {
         :type => "dr",
-        :id => i.to_s,
+        :id => actor_id.to_s,
         :followers =>
         [
           {
@@ -210,32 +166,7 @@ module Helpers
           }
         ]
       },
-      :uuid => 'f364c40c-6e91-4064-a825-faae79c10254',
-      :prototype => "explicit.prototype.value"
-    }
-
-    case @@activity_version
-    when 1
-      hash[:relatives] =
-      [
-        {
-          :type => "topic",
-          :id => "265299",
-          :followers =>
-          [
-            {
-              :type => "user",
-              :id => "7890"
-            },
-            {
-              :type => "user",
-              :id => "8901"
-            }
-          ]
-        }
-      ]
-    when 2
-      hash[:extensions] =
+      :extensions =>
       {
         :topic =>
         {
@@ -253,15 +184,13 @@ module Helpers
             }
           ]
         }
-      }
-
-      hash[:version] = 2
-    else
-      hash[:version] = @@activity_version
-    end
-
-    return hash
+      },
+      :uuid => 'f364c40c-6e91-4064-a825-faae79c10254',
+      :prototype => "explicit.prototype.value",
+      :version => 2
+    }
   end
+
 
   class SampleSummary
     include RealSelf::Stream::Digest::Summarizable
@@ -295,6 +224,3 @@ module Helpers
   end
 
 end
-
-# require_relative 'activity_shared_examples'
-# require_relative 'followed_activity_shared_examples'

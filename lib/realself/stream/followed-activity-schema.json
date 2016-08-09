@@ -1,7 +1,7 @@
 {
-  "id" : "http://realself.com/queue-item-schema-v1#",
+  "id" : "http://realself.com/followed-activity-schema#",
   "$schema" : "http://json-schema.org/draft-04/schema#",
-  "description" : "schema for items places on the ingestor queue",
+  "description" : "schema for followed activitiy objects",
   "type" : "object",
   "required" : ["published", "title", "actor", "verb", "object"],
   "properties" : {
@@ -24,11 +24,15 @@
     "target" : {
         "$ref" : "#/definitions/activity-object"
     },
-    "relatives" : {
-        "type" : "array",
-        "items" : {"$ref" : "#/definitions/activity-object"},
+    "extensions" : {
+        "type" : "object",
         "minItems" : 0,
-        "uniqueItems" : true
+        "uniqueItems" : true,
+        "additionalProperties" : {"$ref" : "#/definitions/activity-object"}
+    },
+    "uuid" : {
+      "type" : "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
     },
     "prototype" : {
       "type" : "string"

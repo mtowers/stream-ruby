@@ -49,22 +49,50 @@ describe RealSelf::Daemon::Worker do
         :enable_retry  => true
       })
     end
+
+    it 'honors passed worker param overriedes' do
+      @worker_options[:timeout_job_after] = 60
+
+      expect(RealSelf::Daemon::ActivityWorker).to receive(:from_queue)
+        .with('test.queue', @worker_options)
+
+      RealSelf::Daemon::ActivityWorker.configure({
+        :exchange_name => 'test.exchange',
+        :queue_name    => 'test.queue',
+        :enable_retry  => true,
+        :worker_options => {
+          :timeout_job_after => 60
+        }
+      })
+    end
+
+
+    it 'loggs a warning if there are no handlers registered' do
+      expect(RealSelf.logger).to receive(:warn)
+        .with(/stream_activity\+json/)
+
+      # StreamActivityWorker has no handlers in this context
+      RealSelf::Daemon::StreamActivityWorker.configure({
+        :exchange_name => 'test.exchange',
+        :queue_name    => 'test.queue',
+        :enable_retry  => true
+      })
+    end
   end
 
 
   context '#work_with_params' do
     before(:each) do
-      @activity = RealSelf::Stream::Activity.create(2,
-            'sample activity title',
-            DateTime.parse('1970-01-01T00:00:00Z'),
-            RealSelf::Stream::Objekt.new('test', 0),
-            'ack',
-            RealSelf::Stream::Objekt.new('message', 0),
-            nil,
-            nil,
-            SecureRandom.uuid,
-            'test.activity'
-            )
+      @activity = RealSelf::Stream::Activity.new(
+        'sample activity title',
+        DateTime.parse('1970-01-01T00:00:00Z'),
+        RealSelf::Stream::Objekt.new('test', 0),
+        'ack',
+        RealSelf::Stream::Objekt.new('message', 0),
+        nil,
+        nil,
+        SecureRandom.uuid,
+        'test.activity')
     end
 
 

@@ -5,6 +5,7 @@ ruby '2.2.2'
 gemspec
 
 group :development, :test do
-  gem 'simplecov', '~> 0.7.1', :require => false, :group => :test
+  gem 'coveralls', require: false
+  gem 'simplecov', '~> 0.11.2', :require => false
 end
 

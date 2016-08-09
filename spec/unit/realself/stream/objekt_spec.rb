@@ -26,6 +26,10 @@ describe RealSelf::Stream::Objekt do
     it 'takes a hash and returns a new instance' do
       expect(@objekt).to eql RealSelf::Stream::Objekt.from_hash(example_hash)
     end
+
+    it 'creates a new instance from a hash with underscore prefixed parameters' do
+      expect(@objekt).to eql RealSelf::Stream::Objekt.from_hash({ :_type => 'User', :_id => '1234' })
+    end
   end
 
   describe '::from_json' do

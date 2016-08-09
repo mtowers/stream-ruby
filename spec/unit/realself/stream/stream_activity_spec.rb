@@ -2,47 +2,27 @@ describe RealSelf::Stream::StreamActivity do
 
   def example_hash
     {
-        :object => {:type => "dr", :id => "1234"},
-        :activity => {:title => "sample activity title",
-                      :published => "1970-01-01T00:00:00+00:00",
-                      :actor => {:type => "dr", :id => "1234"},
-                      :verb => "author",
-                      :object => {:type => "answer", :id => "2345"},
-                      :relatives => [{:type => "topic", :id => "4567"}],
-                      :uuid => "f364c40c-6e91-4064-a825-faae79c10254",
-                      :target => {:type => "question", :id => "3456"},
-                      :prototype => "explicit.prototype.value"},
-        :reasons => [
-            {:type => "dr", :id => "1234"},
-            {:type => "topic", :id => "4567"}]
+      :object   => {:type => "dr", :id => "1234"},
+      :activity => Helpers.example_hash,
+      :reasons => [
+        {:type => "dr", :id => "1234"},
+        {:type => "topic", :id => "4567"}
+      ]
     }
   end
+
 
   def example_json
     MultiJson::encode(example_hash)
   end
 
-  def example_activity
-    RealSelf::Stream::Activity.create(1,
-      'sample activity title',
-      DateTime.parse('1970-01-01T00:00:00Z'),
-      RealSelf::Stream::Objekt.new('dr', 1234),
-      'author',
-      RealSelf::Stream::Objekt.new('answer', 2345),
-      RealSelf::Stream::Objekt.new('question', 3456),
-      [RealSelf::Stream::Objekt.new('topic', 4567)],
-      'f364c40c-6e91-4064-a825-faae79c10254',
-      'explicit.prototype.value'
-    )
-  end
 
   def example_stream_activity
     RealSelf::Stream::StreamActivity.new(
       RealSelf::Stream::Objekt.new('dr', 1234),
-      example_activity,
+      Helpers.example_activity,
       [RealSelf::Stream::Objekt.new('dr', 1234),
-       RealSelf::Stream::Objekt.new('topic', 4567)]
-    )
+       RealSelf::Stream::Objekt.new('topic', 4567)])
   end
 
   before :each do
@@ -75,8 +55,7 @@ describe RealSelf::Stream::StreamActivity do
 
   describe "#activity" do
     it "returns an Activity" do
-      expect(@stream_activity.activity).to be_an_kind_of RealSelf::Stream::Activity
-      expect(@stream_activity.activity).to be_an_instance_of RealSelf::Stream::ActivityV1
+      expect(@stream_activity.activity).to be_an_instance_of RealSelf::Stream::Activity
 
     end
   end
@@ -84,6 +63,20 @@ describe RealSelf::Stream::StreamActivity do
   describe '#content_type' do
     it 'returns the expected content type' do
       expect(@stream_activity.content_type).to eql RealSelf::ContentType::STREAM_ACTIVITY
+    end
+  end
+
+
+  describe '#prototype' do
+    it 'returns the expected prototype' do
+      expect(@stream_activity.prototype).to eql Helpers.example_activity.prototype
+    end
+  end
+
+
+  describe '#uuid' do
+    it 'returns the expected uuid' do
+      expect(@stream_activity.uuid).to eql Helpers.example_activity.uuid
     end
   end
 

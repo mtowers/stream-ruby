@@ -27,6 +27,10 @@ module RealSelf
             :key        => {:'feed.activity.redacted' => Mongo::Index::DESCENDING},
             :background => background,
             :sparse     => true
+          },
+          {
+            :key        => {:'feed.activity.uuid' => Mongo::Index::DESCENDING},
+            :background => background
           }
         ])
       end
@@ -41,9 +45,10 @@ module RealSelf
       # @param [String] after         a BSON::ObjecxtId string
       # @param [Hash] query           a hash containing a mongo query to use to filter the results
       # @param [bool] include_owner   a flag indicating that the stream item owner should be included in each stream_item returned
+      # @param [Int] sort             a flag indicating sort order for stream items
       #
       # @return [Hash]          {:count => [Integer], :before => [String], :after => [String], :stream_items => [Array]}
-      def get(owner, count = nil, before = nil, after = nil, query = {}, include_owner = true)
+      def get(owner, count = nil, before = nil, after = nil, query = {}, include_owner = true, sort = Mongo::Index::DESCENDING)
         feed_query                            = {}
         count                                 ||= FEED_DEFAULT_PAGE_SIZE
         id_range                              = get_id_range_query(before, after)
@@ -60,7 +65,7 @@ module RealSelf
           {:'$match'    => {:'object.id' => owner.id}},
           {:'$unwind'   => '$feed'},
           {:'$match'    => feed_query},
-          {:'$sort'     => {:'feed._id' => Mongo::Index::DESCENDING}},
+          {:'$sort'     => {:'feed._id' => sort}},
         ]
 
         aggregate_query << {:'$limit'    => count} unless count.nil?
@@ -129,6 +134,56 @@ module RealSelf
             {:upsert => false, :multi => true})
 
         result.modified_count
+      end
+
+      ##
+      # Redact an activity from all feeds managed by this class
+      # Note: If a given owner's capped feed contains multiple
+      # instances of the same activity UUID, only one will be
+      # marked as redacted.  See '$' positional operator in mongodb
+      # documentation:
+      # http://docs.mongodb.org/manual/reference/operator/update/positional
+      #
+      # @param [Hash]     query criteria hash of activities to redact
+      #
+      # @returns [Integer]  The number of owner_type feeds from which the activity was redacted
+      def redact_by_activity(owner_type, query)
+        raise(
+          RealSelf::Feed::FeedError,
+          "Invalid activity query: #{query}"
+        ) unless query.is_a?(Hash) && !query.empty?
+
+        collection = get_collection(owner_type)
+        feed_query = {}
+        query.each do |k, v|
+          feed_query["feed.#{k}".to_sym] = v
+        end
+
+        exclude_redact = {:'feed.activity.redacted' => {:'$ne' => true}}.merge(feed_query)
+
+        uuid_query = [
+          {:'$match'   => feed_query},
+          {:'$unwind'  => '$feed'},
+          {:'$match'   => exclude_redact},
+          {:'$group'   => {:'_id' => '$feed.activity.uuid'}}
+        ]
+        items = collection.aggregate(uuid_query)
+
+        raise(
+          RealSelf::Feed::FeedError,
+          "Provided query returns more than 1 unique uuid to redact."
+        ) unless items.nil? || items.to_a.size <= 1
+
+        aggregate_query = [
+          {:'$match'   => feed_query},
+          {:'$unwind'  => '$feed'},
+          {:'$match'   => exclude_redact}
+        ]
+
+        item = collection.aggregate(aggregate_query).first
+        uuid = item['feed']['activity']['uuid'] if item
+
+        uuid ? redact(owner_type, uuid) : 0
       end
 
 

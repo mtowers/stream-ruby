@@ -1,7 +1,7 @@
 require 'spec_helper'
 
+
 describe RealSelf::Stream::Digest::Digest do
-  include Helpers
 
   before :each do
     @owner = RealSelf::Stream::Objekt.new('user', 2345)
@@ -26,7 +26,7 @@ describe RealSelf::Stream::Digest::Digest do
 
   describe "#add" do
     it "takes a stream activity and adds it to the summary" do
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,
@@ -42,14 +42,14 @@ describe RealSelf::Stream::Digest::Digest do
 
 
     it "takes two stream activities and creates two summaries" do
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,
         [activity.object])
       @digest.add(stream_activity)
 
-      activity2 = user_create_thing_activity
+      activity2 = Helpers.user_create_thing_activity
       stream_activity2 = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity2,
@@ -69,7 +69,7 @@ describe RealSelf::Stream::Digest::Digest do
 
 
     it "does not store empty summaries" do
-      activity = user_update_thing_activity
+      activity = Helpers.user_update_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,
@@ -79,7 +79,7 @@ describe RealSelf::Stream::Digest::Digest do
 
       expect(@digest.empty?).to eql true
 
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,
@@ -91,13 +91,13 @@ describe RealSelf::Stream::Digest::Digest do
 
 
     it "raises an error when the stream_activity owner does not match the digest owner" do
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         nil,
         activity,
         [activity.object])
 
-      expect{ @digest.add(stream_activity) }.to raise_error
+      expect{ @digest.add(stream_activity) }.to raise_error RealSelf::Stream::Digest::Digest::DigestError
     end
   end
 
@@ -108,7 +108,7 @@ describe RealSelf::Stream::Digest::Digest do
       digest = RealSelf::Stream::Digest::Digest.new(:notifications, @owner, 86400, {}, uuid)
       digest2 = RealSelf::Stream::Digest::Digest.new(:notifications, @owner, 86400, {}, uuid)
 
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,
@@ -116,7 +116,7 @@ describe RealSelf::Stream::Digest::Digest do
       digest.add(stream_activity)
       digest2.add(stream_activity)
 
-      activity2 = user_create_thing_activity
+      activity2 = Helpers.user_create_thing_activity
       stream_activity2 = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity2,
@@ -132,7 +132,7 @@ describe RealSelf::Stream::Digest::Digest do
       digest = RealSelf::Stream::Digest::Digest.new(:notifications, @owner, 86400)
       digest2 = RealSelf::Stream::Digest::Digest.new(:subscriptions, @owner, 86400)
 
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,
@@ -140,7 +140,7 @@ describe RealSelf::Stream::Digest::Digest do
       digest.add(stream_activity)
       digest2.add(stream_activity)
 
-      activity2 = user_create_thing_activity
+      activity2 = Helpers.user_create_thing_activity
       stream_activity2 = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity2,
@@ -170,14 +170,14 @@ describe RealSelf::Stream::Digest::Digest do
 
   describe "#to_s" do
     it "converts the digest to a JSON string" do
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,
         [activity.object])
       @digest.add(stream_activity)
 
-      activity2 = user_create_thing_activity
+      activity2 = Helpers.user_create_thing_activity
       stream_activity2 = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity2,
@@ -205,7 +205,7 @@ describe RealSelf::Stream::Digest::Digest do
 
   describe "::from_hash" do
     it "creates a digest from a hash" do
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,
@@ -224,7 +224,7 @@ describe RealSelf::Stream::Digest::Digest do
 
   describe "::from_json" do
     it "creates a digest from a json string" do
-      activity = user_create_thing_activity
+      activity = Helpers.user_create_thing_activity
       stream_activity = RealSelf::Stream::StreamActivity.new(
         @owner,
         activity,

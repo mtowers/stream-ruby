@@ -12,9 +12,10 @@ module RealSelf
       # @param [String] after         a BSON::ObjecxtId string
       # @param [Hash] query           a hash containing a mongo query to use to filter the results
       # @param [bool] include_owner   a flag indicating that the stream item owner should be included in each stream_item returned
+      # @param [Int] sort             a flag indicating sort order for stream items
       #
       # @return [Hash]          {:count => [Integer], :before => [String], :after => [String], :stream_items => [Array]}
-      def get(owner, count = nil, before = nil, after = nil, query = {}, include_owner = true)
+      def get(owner, count = nil, before = nil, after = nil, query = {}, include_owner = true, sort = Mongo::Index::DESCENDING)
         collection = get_collection(owner.type) # Implemented by including class
 
         count ||= FEED_DEFAULT_PAGE_SIZE
@@ -29,7 +30,7 @@ module RealSelf
         feed_query[:redacted]     = {:'$ne' => true}  # omit redacted items
 
         feed = collection.find(feed_query)
-          .sort(:_id => Mongo::Index::DESCENDING)
+          .sort(:_id => sort)
           .limit(count)
           .projection(projection)
           .to_a

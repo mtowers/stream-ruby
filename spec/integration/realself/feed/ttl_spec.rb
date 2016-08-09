@@ -49,7 +49,7 @@ describe RealSelf::Feed::Ttl do
             'object.id'      => Mongo::Index::DESCENDING})
           expect(index[:unique]).to eql true
           index[:name]
-        when "created_1"
+        when "activity.published_-1"
           expect(index[:expireAfterSeconds]).to eql @feed.class::FEED_TTL_SECONDS
           index[:name]
         end
@@ -61,14 +61,14 @@ describe RealSelf::Feed::Ttl do
 
 
   describe '#insert' do
-    it 'adds the "created" attribute to the inserted activities' do
-      activity  = user_create_thing_activity
+    it 'adds entries with published attribute of the correct type' do
+      activity  = Helpers.user_create_thing_activity
       sa        = RealSelf::Stream::StreamActivity.new(@owner, activity, [@owner])
 
       @feed.insert(@owner, sa)
       result = @feed.get @owner
 
-      created = result[:stream_items][0][:created]
+      created = result[:stream_items][0][:activity][:published]
       expect(created).to_not eql nil
       expect(created).to be_instance_of(Time)
     end
@@ -76,7 +76,7 @@ describe RealSelf::Feed::Ttl do
 
     it 'expires old activities' do
       unless IntegrationHelper.skip_ttl_test
-        activity  = user_create_thing_activity
+        activity  = Helpers.user_create_thing_activity
         sa        = RealSelf::Stream::StreamActivity.new(@owner, activity, [@owner])
 
         @feed.insert(@owner, sa)

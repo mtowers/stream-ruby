@@ -23,7 +23,7 @@ shared_examples RealSelf::Feed::Getable do |feed|
       before :each do
         # insert some activities
         5.times do
-          activity = user_create_thing_activity
+          activity = Helpers.user_create_thing_activity
           sa       = RealSelf::Stream::StreamActivity.new(
             @owner,
             activity,
@@ -101,7 +101,7 @@ shared_examples RealSelf::Feed::Getable do |feed|
 
 
       it 'executes passed filters' do
-          activity = user_update_thing_activity
+          activity = Helpers.user_update_thing_activity
           sa       = RealSelf::Stream::StreamActivity.new(
             @owner,
             activity,

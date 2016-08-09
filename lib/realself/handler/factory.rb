@@ -51,6 +51,8 @@ module RealSelf
 
 
       def self.registered_routing_keys(content_type)
+        @@registered_handlers[content_type] ||= {}
+
         @@registered_handlers[content_type].keys
       end
     end

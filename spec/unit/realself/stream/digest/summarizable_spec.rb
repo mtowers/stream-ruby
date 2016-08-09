@@ -7,14 +7,14 @@ describe RealSelf::Stream::Digest::Summarizable do
       Helpers.user_create_thing_activity,
       [@owner])
 
-    @summary         = SampleSummary.new(@object)
+    @summary         = Helpers::SampleSummary.new(@object)
   end
 
 
   describe '#initialize' do
     it 'should raise an exception if the summary type does not match the constructor object type' do
       object = RealSelf::Stream::Objekt.new('bogus-thing', 2345)
-      expect{SampleSummary.new(object)}.to raise_error ArgumentError
+      expect{Helpers::SampleSummary.new(object)}.to raise_error ArgumentError
     end
   end
 
@@ -55,13 +55,13 @@ describe RealSelf::Stream::Digest::Summarizable do
 
     it 'should return false for dissimilar summaries' do
       @summary.add(@stream_activity)
-      summary2 = SampleSummary.new(@object)
+      summary2 = Helpers::SampleSummary.new(@object)
 
       expect(@summary == summary2).to eql false
     end
 
     it 'should return true for identical summaries' do
-      summary2 = SampleSummary.new(@object)
+      summary2 = Helpers::SampleSummary.new(@object)
       @summary.add(@stream_activity)
       summary2.add(@stream_activity)
 

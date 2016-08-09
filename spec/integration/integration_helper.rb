@@ -1,5 +1,6 @@
 require 'mongo'
-require 'simplecov'
+
+SimpleCov.command_name "test:integration"
 
 module IntegrationHelper
   include Mongo
@@ -33,4 +34,3 @@ RSpec.configure do |config|
   end
 end
 
-SimpleCov.command_name "test:integration"
