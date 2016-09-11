@@ -26,16 +26,16 @@ shared_examples RealSelf::Feed::Stateful do |feed|
 
     context 'when state exists' do
       it 'should return all states' do
-        @feed.set_bookmark(@owner, @bookmark)
+        @feed.set_bookmark(@owner, @bookmark, :position)
         states = @feed.get_state(@owner)
-        expect(["_id", "owner_id", "position"] - states.keys).to be_empty
+        expect(["_id", "owner_id", "bookmarks"] - states.keys).to be_empty
       end
 
       it 'should not affect other states' do
-        @feed.set_bookmark(@owner, @bookmark)
+        @feed.set_bookmark(@owner, @bookmark, :position)
         @feed.touch_session(@owner)
         states = @feed.get_state(@owner)
-        expect(["_id", "owner_id", "position", "last_active"] - states.keys).to be_empty
+        expect(["_id", "owner_id", "bookmarks", "last_active"] - states.keys).to be_empty
       end
     end
   end
@@ -43,15 +43,15 @@ shared_examples RealSelf::Feed::Stateful do |feed|
   describe '#increment_unread_count' do
     context 'when state document exists, and count field does not' do
       it 'will successfully create and increment count' do
-        @feed.set_bookmark @owner, @bookmark
+        @feed.set_bookmark(@owner, @bookmark, :position)
 
         states = @feed.get_state(@owner)
-        expect(states[:position]).to eql @bookmark
+        expect(states[:bookmarks][:position]).to eql @bookmark
         expect(states[:unread_count]).to be_nil
 
         @feed.increment_unread_count @owner
         states = @feed.get_state(@owner)
-        expect(states[:position]).to eql @bookmark
+        expect(states[:bookmarks][:position]).to eql @bookmark
         expect(states[:unread_count]).to eql 1
       end
     end

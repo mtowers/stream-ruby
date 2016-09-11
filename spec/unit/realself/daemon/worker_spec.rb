@@ -50,7 +50,7 @@ describe RealSelf::Daemon::Worker do
       })
     end
 
-    it 'honors passed worker param overriedes' do
+    it 'honors passed worker param overrides' do
       @worker_options[:timeout_job_after] = 60
 
       expect(RealSelf::Daemon::ActivityWorker).to receive(:from_queue)

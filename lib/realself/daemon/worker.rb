@@ -19,12 +19,14 @@ module RealSelf
                             activity.content_type,
                             self.class.handler_params)
 
+        RealSelf.logger.info "#{handlers.map { |h| h.class.name}.join(',')} handling prototype=#{activity.prototype} uuid=#{activity.uuid}, owner=#{activity.owner.type}:#{activity.owner.id}"
+
         enclosure.handle do
           handlers.each do |h|
-            RealSelf.logger.info "#{h.class.name} handling #{activity.prototype}, UUID: #{activity.uuid}, owner: #{activity.owner.type}:#{activity.owner.id}"
             h.handle activity
           end
         end
+
       end
 
 
@@ -42,7 +44,7 @@ module RealSelf
           worker_options[:routing_key] = Handler::Factory.registered_routing_keys(self.content_type)
 
           # warn when no handlers registered for content type
-          RealSelf.logger.warn("No registered handlers found for content_type: #{self.content_type}, Worker: #{self.class.name}") if worker_options[:routing_key].empty?
+          RealSelf.logger.warn("No registered handlers found for content_type=#{self.content_type}, worker=#{self.class.name}") if worker_options[:routing_key].empty?
 
           # enable DLX with default name if requested
           worker_options.merge!(

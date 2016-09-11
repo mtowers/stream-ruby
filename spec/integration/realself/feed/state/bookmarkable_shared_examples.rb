@@ -16,14 +16,14 @@ shared_examples RealSelf::Feed::State::Bookmarkable do |feed|
 
   describe '#get_bookmark' do
     it 'will return nil when there is no bookmark' do
-      expect(@feed.get_bookmark(@owner)).to be_nil
+      expect(@feed.get_bookmark(@owner, :no_key)).to be_nil
     end
   end
 
   describe '#set_bookmark' do
     it 'bookmark/set a position with valid BSON::ObjectId' do
-      set_pos = @feed.set_bookmark(@owner, @position)
-      get_pos = @feed.get_bookmark(@owner)
+      set_pos = @feed.set_bookmark(@owner, @position, :test_cursor)
+      get_pos = @feed.get_bookmark(@owner, :test_cursor)
 
       expect(set_pos).to eql get_pos
       expect(@position).to eql set_pos
@@ -31,22 +31,44 @@ shared_examples RealSelf::Feed::State::Bookmarkable do |feed|
 
     it 'will not accept illegal BSON::ObjectId' do
       position = "It's a string!"
-      expect{ @feed.set_bookmark(@owner, position) }.to raise_error(RealSelf::Feed::FeedError)
+      expect{ @feed.set_bookmark(@owner, :cursor, position) }.to raise_error(RealSelf::Feed::FeedError)
+    end
+
+    it 'can handle multiple key with different position' do
+      position_1 = BSON::ObjectId.from_time(Time.now)
+      position_2 = BSON::ObjectId.from_time(Time.now + 2000)
+      @feed.set_bookmark(@owner, position_1)
+      @feed.set_bookmark(@owner, position_2, :seconds_later)
+
+      expect(@feed.get_bookmark(@owner)).to eql position_1
+      expect(@feed.get_bookmark(@owner, :seconds_later)).to eql position_2
     end
   end
 
   describe '#remove_bookmark' do
     it 'does nothing when there are no bookmark initially' do
-      expect(@feed.get_bookmark(@owner)).to be_nil
-      @feed.remove_bookmark(@owner)
-      expect(@feed.get_bookmark(@owner)).to be_nil
+      expect(@feed.get_bookmark(@owner, :key_does_not_exist)).to be_nil
+      @feed.remove_bookmark(@owner, :key_does_not_exist)
+      expect(@feed.get_bookmark(@owner, :key_does_not_exist)).to be_nil
     end
 
     it 'removes a bookmark' do
-      @feed.set_bookmark(@owner, @position)
-      expect(@feed.get_bookmark(@owner)).to eql @position
-      @feed.remove_bookmark(@owner)
-      expect(@feed.get_bookmark(@owner)).to be_nil
+      @feed.set_bookmark(@owner, @position, :position)
+      expect(@feed.get_bookmark(@owner, :position)).to eql @position
+      @feed.remove_bookmark(@owner, :position)
+      expect(@feed.get_bookmark(@owner, :position)).to be_nil
+    end
+
+    it 'should not remove another bookmark' do
+      position_1 = BSON::ObjectId.from_time(Time.now)
+      position_2 = BSON::ObjectId.from_time(Time.now + 2000)
+      @feed.set_bookmark(@owner, position_1, :time_now)
+      @feed.set_bookmark(@owner, position_2, :time_seconds_later)
+
+      @feed.remove_bookmark(@owner, :time_now)
+
+      expect(@feed.get_bookmark(@owner, :time_now)).to be nil
+      expect(@feed.get_bookmark(@owner, :time_seconds_later)).to eql position_2
     end
   end
 

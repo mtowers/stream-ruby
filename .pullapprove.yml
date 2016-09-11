@@ -1,0 +1,9 @@
+approve_by_comment: true
+approve_regex: ^([Aa]pproved*|.*:shipit:|.*:ship:|.*LGTM|Good to go|[Ll]ooks [Gg]ood [Tt]o [Mm]e|.*:ok_hand:|.*:100:|.*:+1:)
+reject_regex: ^(Rejected|Wait|.*:no_good:|.*:halt:|.*:middle_finger:|.*:x:|.:no_entry:|.*:no_entry_sign:)
+reset_on_push: true
+reject_value: -99
+reviewers:
+  members:
+    - mtowers
+  required: 1
