@@ -115,6 +115,23 @@ shared_examples RealSelf::Feed::Getable do |feed|
           expect(result[:count]).to eql 1
           expect(result[:stream_items][0][:activity][:prototype]).to eql 'user.update.thing'
       end
+
+      it 'executes complex filters' do
+        result = @feed.get @owner, 10
+        expect(result[:count]).to eql 5
+        activity = Helpers.user_update_thing_activity
+        sa       = RealSelf::Stream::StreamActivity.new(
+          @owner,
+          activity,
+          [@owner])
+
+        @feed.insert @owner, sa
+
+        query   = {:$or => [{:'activity.prototype' => 'user.create.thing'}, {:'activity.uuid' => activity.uuid}]}
+        result  = @feed.get @owner, nil, nil, nil, query
+
+        expect(result[:count]).to eql 6
+      end
     end
   end
 end

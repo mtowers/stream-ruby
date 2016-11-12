@@ -62,7 +62,7 @@ shared_examples RealSelf::Feed::Redactable do |feed|
       result = @feed.get owner
       expect(result[:count]).to eql 2
 
-      @feed.redact :user, activity.uuid
+      @feed.redact owner_type: :user, query: {:'activity.uuid' => activity.uuid}
 
       result = @feed.get owner
       expect(result[:count]).to eql 1
@@ -70,7 +70,7 @@ shared_examples RealSelf::Feed::Redactable do |feed|
       result =  @feed.get owner2
       expect(result[:count]).to eql 1
 
-      @feed.redact :user, activity2.uuid
+      @feed.redact owner_type: :user, query: {:'activity.uuid' => activity2.uuid}
 
       result = @feed.get owner
       expect(result[:count]).to eql 0
@@ -80,115 +80,82 @@ shared_examples RealSelf::Feed::Redactable do |feed|
     end
   end
 
-  describe '#redact_by_activity' do
-    context 'when unpublished content exist in feed' do
-      it 'should redact activity' do
-        owner     = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
-        owner2    = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
-        activity  = Helpers.user_create_thing_activity
-        activity2 = Helpers.user_update_thing_activity
-        unpub_activity = Helpers.user_unpublish_thing_activity(1234, activity.object.id)
-        redaction_query = {:'activity.object' => activity.object.to_h}
-        unpub_activity2 = Helpers.user_unpublish_thing_activity(1234, activity2.object.id)
-        redaction_query2 = {'activity.object' => activity2.object.to_h}
+  context 'when unpublished content exist in feed' do
+    it 'should redact activity' do
+      owner     = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
+      owner2    = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
+      activity  = Helpers.user_create_thing_activity
+      activity2 = Helpers.user_update_thing_activity
+      unpub_activity = Helpers.user_unpublish_thing_activity(1234, activity.object.id)
+      redaction_query = {:'activity.object' => activity.object.to_h}
+      unpub_activity2 = Helpers.user_unpublish_thing_activity(1234, activity2.object.id)
+      redaction_query2 = {'activity.object' => activity2.object.to_h}
 
-        sa        = RealSelf::Stream::StreamActivity.new(
-          owner,
-          activity,
-          [owner])
+      sa        = RealSelf::Stream::StreamActivity.new(
+        owner,
+        activity,
+        [owner])
 
-        sa2       = RealSelf::Stream::StreamActivity.new(
-          owner2,
-          activity,
-          [owner2])
+      sa2       = RealSelf::Stream::StreamActivity.new(
+        owner2,
+        activity,
+        [owner2])
 
-        @feed.insert owner, sa
-        @feed.insert owner2, sa2
+      @feed.insert owner, sa
+      @feed.insert owner2, sa2
 
-        sa        = RealSelf::Stream::StreamActivity.new(
-          owner,
-          activity2,
-          [owner])
+      sa        = RealSelf::Stream::StreamActivity.new(
+        owner,
+        activity2,
+        [owner])
 
-        sa2       = RealSelf::Stream::StreamActivity.new(
-          owner2,
-          activity2,
-          [owner2])
+      sa2       = RealSelf::Stream::StreamActivity.new(
+        owner2,
+        activity2,
+        [owner2])
 
-        @feed.insert owner, sa
-        @feed.insert owner2, sa2
+      @feed.insert owner, sa
+      @feed.insert owner2, sa2
 
-        result = @feed.get owner
-        expect(result[:count]).to eql 2
+      result = @feed.get owner
+      expect(result[:count]).to eql 2
 
-        expect(@feed.redact_by_activity(:user, redaction_query)).to eql 2
+      expect(@feed.redact(owner_type: :user, query: redaction_query)).to eql 2
 
-        result = @feed.get owner
-        expect(result[:count]).to eql 1
+      result = @feed.get owner
+      expect(result[:count]).to eql 1
 
-        result =  @feed.get owner2
-        expect(result[:count]).to eql 1
+      result =  @feed.get owner2
+      expect(result[:count]).to eql 1
 
-        expect(@feed.redact_by_activity(:user, redaction_query2)).to eql 2
+      expect(@feed.redact(owner_type: :user, query: redaction_query2)).to eql 2
 
-        result = @feed.get owner
-        expect(result[:count]).to eql 0
+      result = @feed.get owner
+      expect(result[:count]).to eql 0
 
-        result =  @feed.get owner2
-        expect(result[:count]).to eql 0
+      result =  @feed.get owner2
+      expect(result[:count]).to eql 0
 
-      end
-
-      context 'when query returns more than 1 unique uuid' do
-        it 'should error' do
-          # same object, different activity
-          owner     = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
-          activity  = Helpers.user_create_thing_activity(Random::rand(1000..9999), 123456)
-          activity2 = Helpers.user_update_thing_activity(Random::rand(1000..9999), 123456)
-
-          sa        = RealSelf::Stream::StreamActivity.new(
-            owner,
-            activity,
-            [owner])
-
-          sa2       = RealSelf::Stream::StreamActivity.new(
-            owner,
-            activity2,
-            [owner])
-
-          @feed.insert(owner, sa)
-          @feed.insert(owner, sa2)
-
-          redaction_query = {:'activity.object' => activity.object.to_h}
-          expect{@feed.redact_by_activity(:user, redaction_query)}
-            .to raise_error(RealSelf::Feed::FeedError, /query/)
-
-          # narrows down the query to 1 unique uuid
-          narrowed_query = {:'activity.object' => activity.object.to_h,
-                            :'activity.prototype' => 'user.update.thing'}
-          expect(@feed.redact_by_activity(:user, narrowed_query)).to eql 1
-          expect(@feed.redact_by_activity(:user, redaction_query)).to eql 1
-        end
-      end
     end
+  end
 
-    context 'when unpublished content does not exist in feed' do
-      it 'does nothing' do
-        owner     = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
-        owner2    = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
-        activity  = Helpers.user_create_thing_activity
-        unpub_activity = Helpers.user_unpublish_thing_activity(1234, "0") 
-        redaction_query = {"'activity.object'" => unpub_activity.object.to_h}
+  context 'when unpublished content does not exist in feed' do
+    it 'does nothing' do
+      owner     = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
+      owner2    = RealSelf::Stream::Objekt.new('user', Random::rand(1000..99999))
+      activity  = Helpers.user_create_thing_activity
+      unpub_activity = Helpers.user_unpublish_thing_activity(1234, "0")
+      redaction_query = {"'activity.object'" => unpub_activity.object.to_h}
 
-        sa        = RealSelf::Stream::StreamActivity.new(
-          owner,
-          activity,
-          [owner])
+      sa        = RealSelf::Stream::StreamActivity.new(
+        owner,
+        activity,
+        [owner])
 
-        sa2       = RealSelf::Stream::StreamActivity.new(
-          owner2,
-          activity,
-          [owner2])
+      sa2       = RealSelf::Stream::StreamActivity.new(
+        owner2,
+        activity,
+        [owner2])
 
         @feed.insert owner, sa
         @feed.insert owner2, sa2
@@ -199,7 +166,7 @@ shared_examples RealSelf::Feed::Redactable do |feed|
         result =  @feed.get owner2
         expect(result[:count]).to eql 1
 
-        expect(@feed.redact_by_activity(:user, redaction_query)).to eql 0
+        expect(@feed.redact(owner_type: :user, query: redaction_query)).to eql 0
 
         result = @feed.get owner
         expect(result[:count]).to eql 1
@@ -207,21 +174,20 @@ shared_examples RealSelf::Feed::Redactable do |feed|
         result = @feed.get owner2
         expect(result[:count]).to eql 1
 
-      end
     end
+  end
 
-    context 'when query input is not a hash' do
-      it 'should raise FeedError' do
-        expect{@feed.redact_by_activity(:user, "its a string!")}
-          .to raise_error(RealSelf::Feed::FeedError, /Invalid/)
-      end
+  context 'when query input is not a hash' do
+    it 'should raise FeedError' do
+      expect{@feed.redact(owner_type: :user, query: "its a string!")}
+        .to raise_error(RealSelf::Feed::FeedError, /Invalid/)
     end
+  end
 
-    context 'when query input is empty hash' do
-      it 'should do nothing' do
-        expect{@feed.redact_by_activity(:user, {})}
-          .to raise_error(RealSelf::Feed::FeedError, /query/)
-      end
+  context 'when query input is empty hash' do
+    it 'should do nothing' do
+      expect{@feed.redact(owner_type: :user, query: {})}
+        .to raise_error(RealSelf::Feed::FeedError, /query/)
     end
   end
 
